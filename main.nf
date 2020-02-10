@@ -260,12 +260,28 @@ process splitPeptides {
 
     when: !params.input
 
-    // @TODO
-    // splitting mechanism missing
-    script:
-    """
-    cat ${peptides} > "${peptides.fileName}.tsv"
-    """
+    shell:
+    '''
+    tot_size=$( wc -l <!{peptides} ) 
+    # min. number of peptides in one chunk
+    min_size=1000
+    # max. number of of files that should be processed in parallel
+    max_cpus=100
+
+    h=$(( tot_size / max_cpus ))
+    l=$(( min_size > h ? min_size : h ))
+    if (( $tot_size > $l )); then echo "The file !{peptides} containing $tot_size peptides will be split into chunks with a min. size of $l." ; fi
+    split -l $l <(tail -n+2 !{peptides}) xyz
+
+    c=1
+    for file in xyz*
+    do
+        head -1 !{peptides} > !{peptides.baseName}.chunk_${c}.tsv
+        cat ${file} >> !{peptides.baseName}.chunk_${c}.tsv
+        rm ${file}
+        ((++c))
+    done
+    '''
 }
 
 
