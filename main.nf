@@ -260,28 +260,30 @@ process splitPeptides {
 
     when: !params.input
 
-    shell:
-    '''
-    tot_size=$( wc -l <!{peptides} ) 
+
+    """
+    #!/usr/bin/python
+
+    with open(${peptides}, 'r') as infile:
+        tot_size = sum([1 for _ in infile])
+
     # min. number of peptides in one chunk
     min_size=1000
-    # max. number of of files that should be processed in parallel
-    max_cpus=100
+    # max. number of files that should be created
+    max_chunks=50
 
-    h=$(( tot_size / max_cpus ))
-    l=$(( min_size > h ? min_size : h ))
-    if (( $tot_size > $l )); then echo "The file !{peptides} containing $tot_size peptides will be split into chunks with a min. size of $l." ; fi
-    split -l $l <(tail -n+2 !{peptides}) xyz
+    n = int(min(math.ceil(float(tot_size)/min_size), max_chunks))
+    h = int(max(min_size, math.ceil(float(tot_size)/n)))
 
-    c=1
-    for file in xyz*
-    do
-        head -1 !{peptides} > !{peptides.baseName}.chunk_${c}.tsv
-        cat ${file} >> !{peptides.baseName}.chunk_${c}.tsv
-        rm ${file}
-        ((++c))
-    done
-    '''
+    with open(${peptides}, "r") as infile:
+        for chunk in range(n):
+            with open(${peptides.baseName}+".chunk_"+str(chunk)+".tsv", "w") as outfile:
+                for _ in range(h):
+                    try:
+                        outfile.write(next(infile))
+                    except StopIteration:
+                        break	
+    """
 }
 
 
