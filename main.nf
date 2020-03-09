@@ -270,7 +270,7 @@ process splitPeptides {
         tot_size = sum([1 for _ in infile])
 
     # min. number of peptides in one chunk
-    min_size=1000
+    min_size=5000
     # max. number of files that should be created
     max_chunks=100
 
