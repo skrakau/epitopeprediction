@@ -264,20 +264,24 @@ process splitPeptides {
     """
     #!/usr/bin/python
 
-    with open(${peptides}, 'r') as infile:
+    import math
+
+    with open("${peptides}", 'r') as infile:
         tot_size = sum([1 for _ in infile])
 
     # min. number of peptides in one chunk
     min_size=1000
     # max. number of files that should be created
-    max_chunks=50
+    max_chunks=100
 
     n = int(min(math.ceil(float(tot_size)/min_size), max_chunks))
     h = int(max(min_size, math.ceil(float(tot_size)/n)))
 
-    with open(${peptides}, "r") as infile:
+    with open("${peptides}", "r") as infile:
+        header = next(infile)
         for chunk in range(n):
-            with open(${peptides.baseName}+".chunk_"+str(chunk)+".tsv", "w") as outfile:
+            with open("${peptides.baseName}"+".chunk_"+str(chunk)+".tsv", "w") as outfile:
+                outfile.write(header)
                 for _ in range(h):
                     try:
                         outfile.write(next(infile))
